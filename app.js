@@ -1378,6 +1378,7 @@ function parseScientificRight(val) {
 }
 
 function ltCalculate() {
+  const resultsDiv = document.getElementById('lt-results');
   try {
     const budgetRaw = document.getElementById('lt-budget').value || '2.277e12';
     const prevBERaw = document.getElementById('lt-prev-be').value || '0';
