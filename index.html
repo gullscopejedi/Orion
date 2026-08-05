@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EFS Calculator — Egg Farm Simulator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥚</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="header-left">
+        <span class="logo">🥚</span>
+        <h1>EFS Calculator</h1>
+        <span class="subtitle">Egg Farm Simulator on Roblox</span>
+      </div>
+      <div class="header-right">
+        <button id="btn-save" class="btn btn-outline" title="Save state to browser">💾 Save</button>
+        <button id="btn-load" class="btn btn-outline" title="Load saved state">📂 Load</button>
+        <button id="btn-reset" class="btn btn-outline btn-danger" title="Reset all inputs">🗑️ Reset</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="tab" data-tab="farmers">🧑‍🌾 Farmers</button>
+      <button class="tab" data-tab="easter-eggs">🥚 LifeTraveler Strategy</button>
+      <button class="tab" data-tab="phoenix-eggs">🔥 Phoenix Eggs</button>
+      <button class="tab" data-tab="black-eggs">⬛ BE Calculator</button>
+      <button class="tab" data-tab="rebirth">🔄 Rebirth</button>
+      <button class="tab" data-tab="boss">🐔 Boss Timer</button>
+    </nav>
+
+    <main>
+      <!-- ==================== DASHBOARD ==================== -->
+      <section id="tab-dashboard" class="tab-content active">
+        <div class="grid-2">
+          <div class="card">
+            <h2>📊 Quick Stats</h2>
+            <div class="stat-grid">
+              <div class="stat">
+                <label>Farm Level</label>
+                <input type="number" id="dash-farm-level" value="1" min="1">
+              </div>
+              <div class="stat">
+                <label>Rebirths</label>
+                <input type="number" id="dash-rebirths" value="0" min="0">
+              </div>
+              <div class="stat">
+                <label>Rebirth Power %</label>
+                <input type="number" id="dash-rp" value="0" min="0" max="25" step="0.01">
+              </div>
+              <div class="stat">
+                <label>Total Golden Eggs (Lifetime)</label>
+                <input type="number" id="dash-ge" value="0" min="0">
+              </div>
+              <div class="stat">
+                <label>Total Black Eggs (Lifetime)</label>
+                <input type="text" id="dash-be-total" placeholder="e.g. 1e50 or 1000000">
+              </div>
+              <div class="stat">
+                <label>Unspent Black Eggs</label>
+                <input type="text" id="dash-be-unspent" placeholder="e.g. 1e40">
+              </div>
+              <div class="stat">
+                <label>Critical Chance %</label>
+                <input type="number" id="dash-crit-chance" value="10" min="0" max="100" step="0.1">
+              </div>
+              <div class="stat">
+                <label>Critical Damage Multiplier</label>
+                <input type="number" id="dash-crit-dmg" value="10" min="1" step="0.1">
+              </div>
+              <div class="stat">
+              <label>Attack Speed (clicks/sec)</label>
+              <input type="number" id="dash-atk-speed" value="2" min="0.1" step="0.1">
+            </div>
+            <div class="stat">
+              <label>Trophies (per farmer bonus)</label>
+              <input type="number" id="dash-trophies" value="0" min="0" placeholder="0">
+            </div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>📈 Summary</h2>
+            <div class="results-panel" id="dash-summary">
+              <div class="result-row"><span>Total DPS:</span><span id="sum-dps">0</span></div>
+              <div class="result-row"><span>Attack Damage:</span><span id="sum-atk">0</span></div>
+              <div class="result-row"><span>Effective DPS (w/ crit):</span><span id="sum-eff-dps">0</span></div>
+              <div class="result-row"><span>Chickens/Level:</span><span id="sum-chickens">10</span></div>
+              <div class="result-row"><span>Boss HP Mult:</span><span id="sum-boss-hp">x10</span></div>
+              <div class="result-row"><span>Boss Timer (base):</span><span id="sum-boss-timer">30s</span></div>
+              <div class="result-row"><span>Eggception Chance:</span><span id="sum-eggception">1%</span></div>
+              <div class="result-row"><span>Mutated Boss %:</span><span id="sum-mutated">25%</span></div>
+              <div class="result-row"><span>BE per Boss (est.):</span><span id="sum-be-boss">—</span></div>
+              <div class="result-row"><span>AFK DPS Mult:</span><span id="sum-afk">x1.00</span></div>
+              <div class="result-row"><span>Farm Cost Reduction:</span><span id="sum-cost-red">0%</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>💡 Recommendations</h2>
+          <div id="recommendations" class="rec-list"></div>
+        </div>
+      </section>
+
+      <!-- ==================== FARMERS ==================== -->
+      <section id="tab-farmers" class="tab-content">
+        <div class="card">
+          <h2>🧑‍🌾 Farmer Optimizer</h2>
+          <p class="card-desc">Calculate DPS for each farmer at any level. Factors in the 4x boost every 25 levels above 200 and the 10x boost at level 1000.</p>
+          <div class="grid-3">
+            <div class="stat">
+              <label>Available White Eggs</label>
+              <input type="text" id="farmer-we" placeholder="e.g. 1e15">
+            </div>
+            <div class="stat">
+              <label>Garbage Egg Level</label>
+              <input type="number" id="farmer-garbage" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Show up to farmer #</label>
+              <input type="number" id="farmer-show" value="26" min="1" max="54">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="farmer-calc-btn">Calculate</button>
+        </div>
+        <div class="card">
+          <h2>📋 Farmer List</h2>
+          <div class="table-wrap">
+            <table id="farmer-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Hire Cost</th>
+                  <th>Base DPS</th>
+                  <th>Your Level</th>
+                  <th>Your DPS</th>
+                  <th>DPS/WE Ratio</th>
+                  <th>Ability</th>
+                </tr>
+              </thead>
+              <tbody id="farmer-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" id="farmer-optimal-card" style="display:none">
+          <h2>⭐ Optimal Spending Strategy</h2>
+          <div id="farmer-optimal-results"></div>
+        </div>
+      </section>
+
+      <!-- ==================== LIFE TRAVELER ==================== -->
+      <section id="tab-easter-eggs" class="tab-content">
+        <div class="card">
+          <h2>🥚 LifeTraveler Allocation Strategy</h2>
+          <p class="card-desc">Based on LifeTraveler's simplified math (https://www.youtube.com/@LifeTraveler): 20% Good Knight, 50% Main 7, 20% Turtle, 10% Misc 13. Includes retirement adjustments.</p>
+          <div class="grid-2">
+            <div class="stat">
+              <label>Total BE Budget (e.g. 2.277e12)</label>
+              <input type="text" id="lt-budget" placeholder="e.g. 2.277e12" value="2.277e12">
+            </div>
+            <div class="stat">
+              <label>Previous Retirement BE (for adjustment)</label>
+              <input type="text" id="lt-prev-be" placeholder="0 if first retirement" value="0">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>⚡ Auto Allocation</h2>
+          <button class="btn btn-primary" id="lt-calc-btn">Calculate LifeTraveler Split</button>
+          <div id="lt-results" class="results-panel" style="margin-top:1rem"></div>
+        </div>
+        <div class="card">
+          <h2>📋 Manual Entry & Verification</h2>
+          <p>Enter existing levels. Calculator uses LifeTraveler's "right side of scientific notation" math.</p>
+          <div class="grid-3">
+            <div><label>Good Knight Level</label><input id="lt-gk" type="text" placeholder="e.g. 5e56056"></div>
+            <div><label>AFK Level</label><input id="lt-afk" type="number" value="0"></div>
+            <div><label>Demeaning Level</label><input id="lt-demean" type="number" value="0"></div>
+            <div><label>Dragon Level</label><input id="lt-dragon" type="number" value="0"></div>
+            <div><label>Eggplant Level</label><input id="lt-eggplant" type="number" value="0"></div>
+            <div><label>Faberge Level</label><input id="lt-faberge" type="number" value="0"></div>
+            <div><label>Newton Level</label><input id="lt-newton" type="number" value="0"></div>
+            <div><label>Wonderland Level</label><input id="lt-wonder" type="number" value="0"></div>
+            <div><label>Turtle Level</label><input id="lt-turtle" type="text" placeholder="e.g. 4e22422"></div>
+          </div>
+          <button class="btn btn-primary" onclick="verifyManual()">Verify Levels</button>
+          <div id="lt-verify" class="results-panel"></div>
+        </div>
+      </section>
+
+      <!-- ==================== PHOENIX EGGS ==================== -->
+      <section id="tab-phoenix-eggs" class="tab-content">
+        <div class="card">
+          <h2>🔥 Phoenix Egg Planner</h2>
+          <p class="card-desc">Phoenix Eggs are purchased with Golden Eggs (GE) during Retirement. Plan your GE spending.</p>
+          <div class="stat">
+            <label>Available Golden Eggs</label>
+            <input type="number" id="pe-ge" value="0" min="0">
+          </div>
+        </div>
+        <div class="card">
+          <h2>📋 Phoenix Egg Levels & Effects</h2>
+          <div class="table-wrap">
+            <table id="pe-table">
+              <thead>
+                <tr>
+                  <th>Egg</th>
+                  <th>Current Level</th>
+                  <th>Effect</th>
+                  <th>Next Level Cost (GE)</th>
+                  <th>Cumulative Cost to Level</th>
+                </tr>
+              </thead>
+              <tbody id="pe-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h2>🔢 GE Cost Calculator</h2>
+          <p class="card-desc">How many levels of a Phoenix Egg can you afford with your GE?</p>
+          <div class="grid-3">
+            <div class="stat">
+              <label>Phoenix Egg</label>
+              <select id="pe-cost-egg"></select>
+            </div>
+            <div class="stat">
+              <label>Available GE</label>
+              <input type="number" id="pe-cost-ge" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Current Level</label>
+              <input type="number" id="pe-cost-current" value="0" min="0">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="pe-cost-calc-btn">Calculate</button>
+          <div id="pe-cost-result" class="result-highlight" style="display:none"></div>
+        </div>
+      </section>
+
+      <!-- ==================== BLACK EGGS ==================== -->
+      <section id="tab-black-eggs" class="tab-content">
+        <div class="card">
+          <h2>⬛ Black Egg Earnings Predictor</h2>
+          <p class="card-desc">Estimate total Black Eggs earned by a given farm level (assuming max mutated boss chance).</p>
+          <div class="grid-2">
+            <div class="stat">
+              <label>Earth Egg Level</label>
+              <input type="number" id="be-earth" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Radioactive Egg Level</label>
+              <input type="number" id="be-radio" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Rebirth Power %</label>
+              <input type="number" id="be-rp" value="0" min="0" max="25" step="0.01">
+            </div>
+            <div class="stat">
+              <label>Target Farm Level</label>
+              <input type="number" id="be-target-level" value="1000" min="100">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="be-calc-btn">Predict BE</button>
+          <div id="be-results" class="results-panel" style="margin-top:1rem"></div>
+        </div>
+        <div class="card">
+          <h2>📈 BE Earnings by Level Range</h2>
+          <div class="table-wrap">
+            <table id="be-breakdown-table">
+              <thead>
+                <tr>
+                  <th>Farm Level</th>
+                  <th>BE per Boss</th>
+                  <th>Cumulative BE</th>
+                </tr>
+              </thead>
+              <tbody id="be-breakdown-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h2>💰 Golden Eggs from BE</h2>
+          <p class="card-desc">Calculate how many Golden Eggs you'll earn from your Black Eggs.</p>
+          <div class="grid-2">
+            <div class="stat">
+              <label>Total BE Earned</label>
+              <input type="text" id="ge-from-be-total" placeholder="e.g. 1e100">
+            </div>
+            <div class="stat">
+              <label>Previous BE (already counted)</label>
+              <input type="text" id="ge-from-be-prev" placeholder="0 if first retirement">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="ge-calc-btn">Calculate GE</button>
+          <div id="ge-results" class="results-panel" style="margin-top:1rem"></div>
+        </div>
+      </section>
+
+      <!-- ==================== REBIRTH ==================== -->
+      <section id="tab-rebirth" class="tab-content">
+        <div class="card">
+          <h2>🔄 Rebirth Power Calculator</h2>
+          <p class="card-desc">Calculate your Rebirth Power from lifetime Golden Eggs. Max RP is 25%.</p>
+          <div class="stat">
+            <label>Lifetime Golden Eggs</label>
+            <input type="number" id="rp-ge" value="0" min="0">
+          </div>
+          <button class="btn btn-primary" id="rp-calc-btn">Calculate RP</button>
+          <div id="rp-results" class="results-panel" style="margin-top:1rem"></div>
+        </div>
+        <div class="card">
+          <h2>📊 Retirement Planner</h2>
+          <p class="card-desc">Plan your next retirement: when to retire and how to spend your GE.</p>
+          <div class="grid-2">
+            <div class="stat">
+              <label>Current Farm Level</label>
+              <input type="number" id="ret-current-level" value="1" min="1">
+            </div>
+            <div class="stat">
+              <label>Earth Egg Level</label>
+              <input type="number" id="ret-earth" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Radioactive Egg Level</label>
+              <input type="number" id="ret-radio" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Rebirth Power %</label>
+              <input type="number" id="ret-rp" value="0" min="0" max="25" step="0.01">
+            </div>
+            <div class="stat">
+              <label>Lifetime Golden Eggs</label>
+              <input type="number" id="ret-lifetime-ge" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Lifetime BE Before This Run</label>
+              <input type="text" id="ret-prev-be" placeholder="e.g. 1e50">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="ret-calc-btn">Plan Retirement</button>
+          <div id="ret-results" class="results-panel" style="margin-top:1rem"></div>
+        </div>
+      </section>
+
+      <!-- ==================== BOSS ==================== -->
+      <section id="tab-boss" class="tab-content">
+        <div class="card">
+          <h2>🐔 Boss Fight Calculator</h2>
+          <p class="card-desc">Can you beat the boss? Calculate required DPS and compare with your current stats.</p>
+          <div class="grid-2">
+            <div class="stat">
+              <label>Boss Farm Level</label>
+              <input type="number" id="boss-level" value="5" min="5" step="5">
+            </div>
+            <div class="stat">
+              <label>Your Total DPS</label>
+              <input type="text" id="boss-dps" placeholder="e.g. 1e6">
+            </div>
+            <div class="stat">
+              <label>King Cobra Egg Level</label>
+              <input type="number" id="boss-kc" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Acid Egg Level</label>
+              <input type="number" id="boss-acid" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Hourglass Egg Level</label>
+              <input type="number" id="boss-hg" value="0" min="0">
+            </div>
+            <div class="stat">
+              <label>Wind Egg Level</label>
+              <input type="number" id="boss-wind" value="0" min="0">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="boss-calc-btn">Analyze Boss Fight</button>
+          <div id="boss-results" class="results-panel" style="margin-top:1rem"></div>
+        </div>
+        <div class="card">
+          <h2>⏱️ DPS Requirement Table</h2>
+          <p class="card-desc">Minimum DPS needed to beat bosses at various levels.</p>
+          <div class="table-wrap">
+            <table id="boss-req-table">
+              <thead>
+                <tr>
+                  <th>Boss Level</th>
+                  <th>Base Boss HP (chickens equiv.)</th>
+                  <th>Base Timer</th>
+                  <th>Min DPS Needed</th>
+                </tr>
+              </thead>
+              <tbody id="boss-req-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>EFS Calculator — Game data sourced from the <a href="https://egg-farm-simulator-rblx.fandom.com" target="_blank">Egg Farm Simulator Wiki</a>. Not affiliated with Roblox or SirMing.</p>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
