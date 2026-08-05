@@ -1484,7 +1484,11 @@ function ltCalculate() {
         <tr><td>Good Knight</td><td><strong>Target ${finalGK}</strong></td><td>20% budget / 1 BE = 1 level</td></tr>
         ${main7Names.map(n => `<tr><td>${n}</td><td><strong>Target ${finalMain7[n]}</strong></td><td>50% split / 7 (right-side math)</td></tr>`).join('')}
         <tr><td>Turtle</td><td><strong>Target ${finalTurtle}</strong></td><td>20% budget (n^1.5)</td></tr>
-        ${miscStandard.map(n => `<tr><td>${n}</td><td><strong>Target ${finalMisc[n]}</strong></td><td>10% split / 13 (safe cap)</td></tr>`).join('')}
+        ${miscStandard.map(n => {
+          const level = finalMisc[n];
+          const display = level < 0 ? `<span style="color:#ff6b6b;">Over by ${Math.abs(level)}</span>` : `<strong>Target ${level}</strong>`;
+          return `<tr><td>${n}</td><td>${display}</td><td>10% split / 13 (safe cap)</td></tr>`;
+        }).join('')}
       </tbody>
     </table>
     <div class="results-panel" style="margin-top:1rem;background:rgba(255,200,0,0.05);">
