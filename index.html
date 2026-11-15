@@ -29,10 +29,28 @@
       <button class="tab" data-tab="phoenix-eggs">🔥 Phoenix Eggs</button>
       <button class="tab" data-tab="black-eggs">⬛ BE Calculator</button>
       <button class="tab" data-tab="rebirth">🔄 Rebirth</button>
+      <button class="tab" data-tab="notation">🔢 Notation Converter</button>
       <button class="tab" data-tab="boss">🐔 Boss Timer</button>
     </nav>
 
     <main>
+      <section id="tab-notation" class="tab-content">
+        <div class="card">
+          <h2>🔢 Game Number → Scientific Notation</h2>
+          <p class="card-desc">Enter a number exactly as it appears in Egg Farm Simulator. The converter keeps all digits you enter, including for very large numbers.</p>
+          <form id="notation-form">
+            <div class="stat">
+              <label for="notation-input">Game number</label>
+              <input type="text" id="notation-input" placeholder="e.g. 17q, 1,000K, or 1.234e44" autocomplete="off">
+            </div>
+            <button class="btn btn-primary" type="submit">Convert to scientific notation</button>
+          </form>
+          <div id="notation-result" class="results-panel" style="margin-top:1rem" aria-live="polite">Your result will appear here.</div>
+          <p class="card-desc">Examples: 17q → 1.7e16; 1,000K → 1e6; 1D → 1e39. Suffixes are case-sensitive: q and Q are different.</p>
+          <p class="card-desc">The game may round its displayed number, so the result reflects the displayed value, not necessarily the exact hidden amount. When entering a full number into the game's Custom Value field, omit commas.</p>
+        </div>
+      </section>
+
       <!-- ==================== DASHBOARD ==================== -->
       <section id="tab-dashboard" class="tab-content active">
         <div class="grid-2">
@@ -151,43 +169,29 @@
         </div>
       </section>
 
-      <!-- ==================== LIFE TRAVELER ==================== -->
+      <!-- LifeTraveler planner supports large exponents -->
       <section id="tab-easter-eggs" class="tab-content">
         <div class="card">
-          <h2>🥚 LifeTraveler Allocation Strategy</h2>
-          <p class="card-desc">Based on LifeTraveler's simplified math (https://www.youtube.com/@LifeTraveler): 20% Good Knight, 50% Main 7, 20% Turtle, 10% Misc 13. Includes retirement adjustments.</p>
-          <div class="grid-2">
-            <div class="stat">
-              <label>Total BE Budget (e.g. 2.277e12)</label>
-              <input type="text" id="lt-budget" placeholder="e.g. 2.277e12" value="2.277e12">
+          <h2>🥚 LifeTraveler Strategy — Large BE Planner</h2>
+          <p class="card-desc">A cost-based estimate inspired by LifeTraveler’s 20% / 50% / 20% / 10% split. Handles values beyond 1e308. This is not a reproduction of her spreadsheet; check in-game prices before buying.</p>
+          <form id="big-form">
+            <div class="grid-2">
+              <div class="stat"><label for="big-budget">Unspent BE available to spend now</label><input id="big-budget" type="text" placeholder="e.g. 1.3e333" required></div>
+              <div class="stat"><label for="big-water-mode">Water discount input</label><select id="big-water-mode"><option value="level">Phoenix Water level</option><option value="decimal">Discount decimal (like LifeTraveler)</option></select></div>
+              <div class="stat"><label for="big-water" id="big-water-label">Water Phoenix Egg level (0–150)</label><input id="big-water" type="number" min="0" max="150" step="1" value="0" required></div>
+              <div class="stat"><label for="big-mode">Current-level method</label><select id="big-mode"><option value="current">Enter current levels (recommended when unsure)</option><option value="auto">Compare with previous retirement budget</option><option value="shortcut">Use e3 shortcut (ignore other current levels)</option></select></div>
+              <div class="stat" id="big-prev-wrap" hidden><label for="big-prev">Previous retirement BE budget</label><input id="big-prev" type="text" placeholder="e.g. 7.399e138"></div>
+              <div class="stat"><label for="big-misc-common">Current Misc level (used for blank individual entries)</label><input id="big-misc-common" type="text" placeholder="e.g. 455" required></div>
+              <div class="stat"><label for="big-cap">Misc target cap (all except Idol)</label><input id="big-cap" type="number" min="1" max="1000000" step="1" value="150000" required></div>
+              <div class="stat"><label for="big-idol-cap">Idol target cap</label><input id="big-idol-cap" type="number" min="1" max="1000000" step="1" value="30000" required></div>
             </div>
-            <div class="stat">
-              <label>Previous Retirement BE (for adjustment)</label>
-              <input type="text" id="lt-prev-be" placeholder="0 if first retirement" value="0">
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <h2>⚡ Auto Allocation</h2>
-          <button class="btn btn-primary" id="lt-calc-btn" onclick="ltCalculate()">Calculate LifeTraveler Split</button>
-          <div id="lt-results" class="results-panel" style="margin-top:1rem"></div>
-        </div>
-        <div class="card">
-          <h2>📋 Manual Entry & Verification</h2>
-          <p>Enter existing levels. Calculator uses LifeTraveler's "right side of scientific notation" math.</p>
-          <div class="grid-3">
-            <div><label>Good Knight Level</label><input id="lt-gk" type="text" placeholder="e.g. 5e56056"></div>
-            <div><label>AFK Level</label><input id="lt-afk" type="number" value="0"></div>
-            <div><label>Demeaning Level</label><input id="lt-demean" type="number" value="0"></div>
-            <div><label>Dragon Level</label><input id="lt-dragon" type="number" value="0"></div>
-            <div><label>Eggplant Level</label><input id="lt-eggplant" type="number" value="0"></div>
-            <div><label>Faberge Level</label><input id="lt-faberge" type="number" value="0"></div>
-            <div><label>Newton Level</label><input id="lt-newton" type="number" value="0"></div>
-            <div><label>Wonderland Level</label><input id="lt-wonder" type="number" value="0"></div>
-            <div><label>Turtle Level</label><input id="lt-turtle" type="text" placeholder="e.g. 4e22422"></div>
-          </div>
-          <button class="btn btn-primary" onclick="verifyManual()">Verify Levels</button>
-          <div id="lt-verify" class="results-panel"></div>
+            <p class="card-desc">Always enter a current Misc level above. If some Misc eggs differ, enter individual levels below. LifeTraveler says you may ignore other current levels if the new budget is at least 1,000 times the previous one. Otherwise enter each current level. Caps are strategy limits, not game limits.</p>
+            <div id="big-other-wrap"><h3>Good Knight, Main 7 and Turtle current levels</h3><div class="grid-2" id="big-inputs"></div></div>
+            <details><summary>Optional: individual Misc 13 current levels</summary><p class="card-desc">Leave blank to use the common Misc level above.</p><div class="grid-2" id="big-misc-inputs"></div></details>
+            <button type="submit" class="btn btn-primary">Calculate LifeTraveler Split</button>
+          </form>
+          <div id="big-results" class="results-panel" style="margin-top:1rem" aria-live="polite">Results appear here.</div>
+          <p class="card-desc">Calculations reserve 1% of each allocation and round large purchases down. This model buys from individual shares; it does not reproduce LifeTraveler’s exact formulas. Turtle uses a conservative integral bound and differs from the supplied example; costs and large-number results are estimates. Caps may leave BE unspent. Rounding in the game and bulk-buy rules may differ.</p>
         </div>
       </section>
 
@@ -403,6 +407,37 @@
       <p>EFS Calculator — Game data sourced from the <a href="https://egg-farm-simulator-rblx.fandom.com" target="_blank">Egg Farm Simulator Wiki</a>. Not affiliated with Roblox or SirMing.</p>
     </footer>
   </div>
+  <script>
+    // Convert digit strings rather than JavaScript numbers, avoiding overflow and rounding.
+    function gameNumberToScientific(input) {
+      const suffixes = { K: 3, M: 6, B: 9, T: 12, q: 15, Q: 18, s: 21, S: 24, O: 27, N: 30, d: 33, U: 36, D: 39, Td: 42 };
+      const match = input.trim().match(/^([+-]?)((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?|\.\d+)\s*(?:(e[+-]?\d+)|([A-Za-z]+))?$/);
+      if (!match) throw new Error('Enter a valid number, such as 1,000K, 17q, or 1.234e44.');
+      const suffix = match[4];
+      if (suffix && !Object.prototype.hasOwnProperty.call(suffixes, suffix)) {
+        throw new Error('Unknown suffix. Use K, M, B, T, q, Q, s, S, O, N, d, U, D, or Td (case matters).');
+      }
+      const number = match[2].replace(/,/g, '');
+      const parts = number.split('.');
+      const digits = parts.join('');
+      const first = digits.search(/[1-9]/);
+      if (first === -1) return '0e0';
+      const significant = digits.slice(first).replace(/0+$/, '');
+      const exponent = BigInt(parts[0].length - first - 1) + (suffix ? BigInt(suffixes[suffix]) : match[3] ? BigInt(match[3].slice(1)) : 0n);
+      const mantissa = significant[0] + (significant.length > 1 ? '.' + significant.slice(1) : '');
+      return (match[1] === '-' ? '-' : '') + mantissa + 'e' + exponent.toString();
+    }
+    document.getElementById('notation-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const result = document.getElementById('notation-result');
+      try {
+        result.textContent = gameNumberToScientific(document.getElementById('notation-input').value);
+      } catch (error) {
+        result.textContent = error.message;
+      }
+    });
+  </script>
+  <script src="big-planner.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

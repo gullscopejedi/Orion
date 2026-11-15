@@ -842,7 +842,7 @@ function formatEffect(name, value) {
 }
 
 // Auto-distribution
-document.getElementById('ee-auto-dist-btn').addEventListener('click', () => {
+document.getElementById('ee-auto-dist-btn')?.addEventListener('click', () => {
   const budget = parseNum(document.getElementById('ee-budget').value);
   if (budget <= 0) {
     showToast('Enter a BE budget first!');
@@ -879,7 +879,7 @@ function buildEeCostSelect() {
   });
 }
 
-document.getElementById('ee-cost-calc-btn').addEventListener('click', () => {
+document.getElementById('ee-cost-calc-btn')?.addEventListener('click', () => {
   const eggName = document.getElementById('ee-cost-egg').value;
   const budget = parseNum(document.getElementById('ee-cost-be').value);
   const currentLvl = parseInt(document.getElementById('ee-cost-current').value) || 0;
@@ -1333,10 +1333,10 @@ function buildBossReqTable() {
 // ---- Initialize ----
 function refreshAll() {
   buildFarmerTable();
-  buildEasterEggTable();
+  if (document.getElementById('ee-tbody')) buildEasterEggTable();
   buildPhoenixEggTable();
   buildBossReqTable();
-  buildEeCostSelect();
+  if (document.getElementById('ee-cost-egg')) buildEeCostSelect();
   buildPeCostSelect();
   updateDashboard();
 }
@@ -1354,186 +1354,9 @@ document.addEventListener('change', (e) => {
 });
 
 // Water egg changes rebuild EE table
-document.getElementById('ee-water').addEventListener('change', buildEasterEggTable);
+document.getElementById('ee-water')?.addEventListener('change', buildEasterEggTable);
 
 // Initialize
 refreshAll();
 
-// ---- LifeTraveler Strategy Implementation ----
-// Based on https://www.youtube.com/@LifeTraveler
-// Allocation: 20% GK, 50% Main 7, 20% Turtle, 10% Misc 13
-
-function parseScientificRight(val) {
-  // LifeTraveler's trick: use only the number on the right of scientific notation
-  // Example: 5e56056 -> split into mantissa 5 and exponent 56056
-  // For calculations she uses the right number for some operations.
-  if (typeof val === 'number') return val;
-  val = val.toString().trim();
-  if (!val.includes('e') && !val.includes('E')) return parseFloat(val) || 0;
-  const match = val.match(/^([\d.]+)[eE]([\d]+)$/);
-  if (!match) return parseFloat(val) || 0;
-  const left = parseFloat(match[1]);
-  const right = parseInt(match[2]) || 0;
-  return { full: parseFloat(val), left, right };
-}
-
-function ltCalculate() {
-  const resultsDiv = document.getElementById('lt-results');
-  try {
-    const budgetRaw = document.getElementById('lt-budget').value || '2.277e12';
-    const prevBERaw = document.getElementById('lt-prev-be').value || '0';
-  const budget = parseNum(budgetRaw);
-  const prevBE = parseNum(prevBERaw);
-
-  // LifeTraveler adjustments
-  let workingBE = budget;
-
-  // Adjustment: if BE earned < e over previous retirement, subtract existing levels
-  const diff = budget - prevBE;
-  if (prevBE > 0 && diff < Math.pow(10, 1)) { // less than 10 difference (approx < e in her simplified terms)
-    workingBE = Math.max(0, budget - prevBE); // simplified reduction: leftover only
-  }
-
-  // 20% Good Knight
-  const gkBudget = workingBE * 0.20;
-  const gkLevel = gkBudget; // constant cost = 1, so level = budget
-
-  // 50% Main 7
-  const main7Budget = workingBE * 0.50;
-  const main7Names = ['AFK', 'Demeaning', 'Dragon', 'Eggplant', 'Faberge', 'Newton', 'Wonderland'];
-  const perMain7 = main7Budget / 7;
-
-  // Use LifeTraveler's "right side" trick for Main 7
-  const main7Results = {};
-  main7Names.forEach(name => {
-    // For linear cost: cumulative = n(n+1)/2, so max n ≈ sqrt(2*budget)
-    // LifeTraveler uses the right side number: if budget is 3e28028, she uses 28028
-    const sci = parseScientificRight(perMain7);
-    let level;
-    if (sci.right !== undefined && sci.right > 0) {
-      // Her math: use right side number directly for level approximation
-      const rightNum = sci.right * 0.8; // approximate level from budget split
-      level = Math.round(rightNum);
-    } else {
-      level = Math.round(Math.sqrt(2 * perMain7));
-    }
-    main7Results[name] = Math.max(0, level);
-  });
-
-  // 20% Turtle Egg (turtle cost n^1.5)
-  const turtleBudget = workingBE * 0.20;
-  const turtleLevelApprox = Math.round(Math.pow(turtleBudget, 2/3)); // rough inverse of n^1.5
-  // LifeTraveler uses right-side math: take scientific notation right number and multiply by 80%
-  const sciTurtle = parseScientificRight(turtleBudget);
-  let turtleLevel = turtleLevelApprox;
-  if (sciTurtle.right !== undefined) {
-    const dec = parseFloat((sciTurtle.right * 0.8).toString().split('.')[1] || '0');
-    turtleLevel = Math.round(sciTurtle.right * 0.8) + Math.round(dec);
-  }
-
-  // 10% Misc 13
-  const miscBudget = workingBE * 0.10;
-  const miscNames = ['Cactus', 'Garbage', 'Hourglass', 'Idol', 'King Cobra', 'Ninja', 'Present', 'Radioactive', 'Scientist', 'Super', 'Treasure', 'Unstable', 'Volcano'];
-  // Actually 13 misc: include chance/timer eggs: Present, Garbage, Hourglass, Cobra, Idol, Ninja, Super, Treasure, Unstable, Volcano, Cactus, Radioactive, Scientist? Let's count properly.
-  // User listed: timer eggs (unstable, volcano, ninja, treasure, cactus, super, plus super saiyan?) and chance (present, garbage, hourglass, cobra). Let's use the standard 13.
-  const miscStandard = ['Cactus','Garbage','Hourglass','Idol','King Cobra','Ninja','Present','Radioactive','Scientist','Super','Treasure','Unstable','Volcano'];
-  const misc13Results = {};
-  miscStandard.forEach(name => {
-    const perMisc = miscBudget / 13;
-    // Never overlevel: target ~150k max for timer, 30k max for idol. Early game: 5-10 levels.
-    const maxSafe = (name === 'Idol') ? 30000 : 150000;
-    let level = Math.round(Math.sqrt(2 * perMisc)); // linear approx
-    if (name === 'Idol') level = Math.round(Math.sqrt(2 * perMisc));
-    misc13Results[name] = Math.min(maxSafe, Math.max(0, Math.round(level)));
-  });
-
-  // Leftover BE handling: add leftovers back to Main 7, then Turtle, then GK crumbs
-  // LifeTraveler: leftover BE always expected. After giving 4 types, leftovers go to Main 7 and Turtle, GK gets final crumbs until BE < GK by e3.
-  let leftover = workingBE - (gkBudget + main7Budget + turtleBudget + miscBudget);
-  // Note: her formulas intentionally calculate slightly lower
-  leftover = Math.max(0, leftover);
-
-  // Add leftover split: mostly Main 7 and Turtle, then GK crumbs
-  const main7Extra = leftover * 0.5; // half leftover to main 7 split
-  const turtleExtra = leftover * 0.3; // 30% to turtle
-  const gkCrumbs = leftover * 0.2; // 20% to GK
-
-  // Adjust final levels
-  const finalGK = Math.round(gkLevel + gkCrumbs);
-  const finalMain7 = {};
-  main7Names.forEach(name => {
-    const extra = Math.round(main7Extra / 7);
-    finalMain7[name] = Math.round(main7Results[name] + extra);
-  });
-  const finalTurtle = Math.round(turtleLevel + Math.round(turtleExtra));
-  const finalMisc = {};
-  miscStandard.forEach(name => {
-    finalMisc[name] = misc13Results[name];
-  });
-
-  resultsDiv.innerHTML = `
-    <h3>LifeTraveler Split — Target Levels After Retirement</h3>
-    <p style="color:var(--text-secondary);font-size:0.9rem">Budget: ${fmtNum(budget)} BE | Previous: ${prevBE > 0 ? fmtNum(prevBE) : 'First retirement'} | Leftover: ${fmtNum(leftover)} BE</p>
-    <div class="results-panel">
-      <div class="result-row"><span>Good Knight (20%):</span> <span class="val-good">Target ${finalGK} (${fmtNum(gkBudget)} BE)</span></div>
-      <div class="result-row"><span>Main 7 split (50%):</span> <span class="val-good">Target ~${Math.round(perMain7)} BE per egg</span></div>
-    </div>
-    <table class="results-table" style="width:100%;margin-top:0.5rem;">
-      <thead><tr><th>Egg Group</th><th>Target Level</th><th>Formula Note</th></tr></thead>
-      <tbody>
-        <tr><td>Good Knight</td><td><strong>Target ${finalGK}</strong></td><td>20% budget / 1 BE = 1 level</td></tr>
-        ${main7Names.map(n => `<tr><td>${n}</td><td><strong>Target ${finalMain7[n]}</strong></td><td>50% split / 7 (right-side math)</td></tr>`).join('')}
-        <tr><td>Turtle</td><td><strong>Target ${finalTurtle}</strong></td><td>20% budget (n^1.5)</td></tr>
-        ${miscStandard.map(n => {
-          const level = finalMisc[n];
-          const display = level < 0 ? `<span style="color:#ff6b6b;">Over by ${Math.abs(level)}</span>` : `<strong>Target ${level}</strong>`;
-          return `<tr><td>${n}</td><td>${display}</td><td>10% split / 13 (safe cap)</td></tr>`;
-        }).join('')}
-      </tbody>
-    </table>
-    <div class="results-panel" style="margin-top:1rem;background:rgba(255,200,0,0.05);">
-      <p><strong>Leftover handling:</strong> ${fmtNum(leftover)} BE expected leftover. Give leftovers back to Main 7 + Turtle, then GK crumbs until remaining BE &lt; GK by e3.</p>
-    </div>
-  `;
-  } catch (e) {
-    document.getElementById('lt-results').innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
-  }
-}
-
-function verifyManual() {
-  const gkRaw = document.getElementById('lt-gk').value || '0';
-  const main7Inputs = ['lt-afk','lt-demean','lt-dragon','lt-eggplant','lt-faberge','lt-newton','lt-wonder'];
-  const main7Names = ['AFK','Demeaning','Dragon','Eggplant','Faberge','Newton','Wonderland'];
-
-  let output = '<h4>Manual Level Check</h4><div class="results-panel">';
-
-  // Good Knight verification
-  const gkSci = parseScientificRight(gkRaw);
-  output += `<div class="result-row"><span>Good Knight Input:</span><span>${gkRaw}</span></div>`;
-  if (gkSci.left && gkSci.right !== undefined) {
-    output += `<div style="font-size:0.85rem;color:var(--text-secondary);padding-left:1rem;">Left: ${gkSci.left}, Right: ${gkSci.right}. LifeTraveler uses right number for calculations.</div>`;
-  }
-
-  // Main 7 verification
-  output += `<div style="margin-top:0.5rem;font-weight:bold;">Main 7 Levels:</div>`;
-  main7Inputs.forEach((id, i) => {
-    const val = document.getElementById(id).value || '0';
-    output += `<div class="result-row"><span>${main7Names[i]}:</span><span class="val-info">${val}</span></div>`;
-  });
-
-  // Turtle verification
-  const turtleRaw = document.getElementById('lt-turtle').value || '0';
-  output += `<div class="result-row" style="margin-top:0.5rem"><span>Turtle Input:</span><span>${turtleRaw}</span></div>`;
-  const tSci = parseScientificRight(turtleRaw);
-  if (tSci.right !== undefined) {
-    const dec = parseFloat((tSci.right * 0.8).toString().split('.')[1] || '0');
-    output += `<div style="font-size:0.85rem;color:var(--text-secondary);padding-left:1rem;">LifeTraveler calc: ${tSci.right} * 80% = ${(tSci.right * 0.8).toFixed(1)}. Decimal used: ${Math.round(dec)}. Example result: ${Math.round(tSci.right * 0.8)}e${tSci.right}</div>`;
-  }
-
-  output += '</div>';
-  document.getElementById('lt-verify').innerHTML = output;
-}
-
-document.getElementById('lt-calc-btn').addEventListener('click', ltCalculate);
-
-window.verifyManual = verifyManual;
+// The LifeTraveler planner is implemented in big-planner.js using logarithms.
